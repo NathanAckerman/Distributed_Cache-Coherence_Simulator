@@ -127,9 +127,10 @@ public class CacheSimulator
             return 2;
         }
     }
-
+/*
     public static void main(String [] args) throws FileNotFoundException, IOException
     {
+
         if(args.length != 4)
         {
             throw new IllegalArgumentException("Expecting: size blocksize assoc path_to_trace_file");
@@ -178,5 +179,76 @@ public class CacheSimulator
         System.out.println("[CacheSimulator] Misses: " + Integer.toString(misses));
         System.out.println("[CacheSimulator] Evicts: " + Integer.toString(evicts));
     }
+*/
 
+	public static void main(String [] args) throws FileNotFoundException, IOException
+	{
+    		boolean debug_mode;
+		if (args.length == 3) {
+			debug_mode = true;
+		} else {
+			debug_mode = false;
+		}
+
+		String config_file = args[0];
+		String trace_file = args[1];
+
+		//vars for config file
+		int p;
+		int n1;
+		int n2;
+		int b;
+		int a;
+		int dc;
+		int dm;
+		//config file format:
+		//p=num
+		//n1=num
+		//n2=num
+		//b=num
+		//a=num
+		//dc=num
+		//dm=num
+
+
+		//parse config file
+		try(BufferedReader br = new BufferedReader(new FileReader(config_file))) 
+		{
+			String[] splitted = new String[2];
+			for(String line; (line = br.readLine()) != null; ) {
+				splitted = line.split("=");
+				switch (splitted[0]) {
+					case "p":
+						p = Integer.parseInt(splitted[1]);
+						break;
+					case "n1":
+						n1 = Integer.parseInt(splitted[1]);
+						break;
+					case "n2":
+						n2 = Integer.parseInt(splitted[1]);
+						break;
+					case "b":
+						b = Integer.parseInt(splitted[1]);
+						break;
+					case "a":
+						a = Integer.parseInt(splitted[1]);
+						break;
+					case "dc":
+						dc = Integer.parseInt(splitted[1]);
+						break;
+					case "dm":
+						dm = Integer.parseInt(splitted[1]);
+						break;
+					default:
+						System.out.println("Error: malformed config file");
+				}
+			}
+		}
+
+
+		//parse trace file
+
+
+
+	}
 }
