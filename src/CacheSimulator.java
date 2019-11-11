@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.lang.IllegalArgumentException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.Math;
 
 public class CacheSimulator
 {
@@ -194,13 +195,13 @@ public class CacheSimulator
 		String trace_file = args[1];
 
 		//vars for config file
-		int p;
-		int n1;
-		int n2;
-		int b;
-		int a;
-		int dc;
-		int dm;
+		int p=0;
+		int n1=0;
+		int n2=0;
+		int b=0;
+		int a=0;
+		int dc=0;
+		int dm=0;
 		//config file format:
 		//p=num
 		//n1=num
@@ -249,6 +250,49 @@ public class CacheSimulator
 		//parse trace file
 
 
+		String[] splitted;
+		int req_cycle;
+		int core_id;
+		long address;
+		int access_type;
+		int res;
 
+		int number_of_cores = (int)Math.pow(2,p);
+		Core[] core_arr = new Core[number_of_cores];
+
+		for (int i = 0; i < number_of_cores; i++) {
+			core_arr[i] = new Core(i);
+		}
+
+		int[] last_req_cycle = new int[number_of_cores];//keep track of last req to know the delta
+		
+		for (int i = 0; i < number_of_cores; i++) {
+			last_req_cycle[i] = 0;
+		}
+
+
+		try(BufferedReader br = new BufferedReader(new FileReader(trace_file))) 
+		{
+		    for(String line; (line = br.readLine()) != null; ) {
+			splitted = line.split(" ", 4);
+			req_cycle = Integer.parseInt(splitted[0]);
+			core_id = Integer.parseInt(splitted[1]);
+			address = Long.decode(splitted[3]);
+			access_type = Integer.parseInt(splitted[2]);
+
+			int last_req_for_that_core = last_req_cycle[core_id];
+			last_req_cycle[core_id] = req_cycle;
+			int req_delta = req_cycle - last_req_for_that_core;
+			core_arr[core_id].add_request_entry(req_delta, address, access_type);
+
+		    }
+		}
+
+		//print core delta queues for debug purposes
+		for (int i = 0; i < number_of_cores; i++) {
+			System.out.println("\n\n");
+			System.out.println("Core: "+i);
+			core_arr[i].print_dq();
+		}
 	}
 }
