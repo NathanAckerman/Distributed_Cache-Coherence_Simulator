@@ -1,9 +1,9 @@
 class RequestEntry
 {
-	int delta;
-	long address;
-	int rw; // 0 for read, 1 for write
-	boolean resolved = false;
+	public int delta;
+	public long address;
+	public int rw; // 0 for read, 1 for write
+	public boolean resolved = false;
 
 	public RequestEntry(int delta, long address, int rw)
 	{
