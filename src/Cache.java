@@ -39,6 +39,22 @@ public class Cache
 		}
 	}
 
+	// TODO implement this
+	public boolean inCache(RequestEntry req)
+	{
+	}
+
+	/*
+	 * \brief Retrive data from memory
+	 * \param[in] addr Address of data to be accessed
+	 *
+	 * \return true if hit, false if miss
+	 */
+	public boolean access(RequestEntry req)
+	{
+		return false;
+	}
+
 	/**
 	 * This is a simple cache block.
 	 * Note that no actual data will be stored in the cache
