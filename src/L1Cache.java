@@ -8,6 +8,8 @@ public class L1Cache extends Cache
 
 	public boolean access(RequestEntry req)
 	{
+		// TODO check if write and not exclusive
+
 		/* hit = no cache coherence necessary */
 		if (inCache(req))
 			return true;
