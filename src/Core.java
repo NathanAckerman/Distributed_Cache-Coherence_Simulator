@@ -2,11 +2,12 @@ import java.util.*;
 
 public class Core {
 	int core_num;
-	//needs DQ
 	Queue<RequestEntry> dq = new LinkedList<RequestEntry>();
-	//needs L1 cache
-	//needs L2 cache
+	Cache l1cache = new L1Cache();
+	Cache l2piece = new L2Piece();
+
 	//needs message queues
+
 	public Core(int core_num)
 	{
 		this.core_num = core_num;
@@ -33,20 +34,6 @@ public class Core {
 	public int get_dq_size()
 	{
 		return dq.size();
-	}
-
-}
-
-class RequestEntry {
-	int delta;
-	long address;
-	int rw;//0 for read, 1 for write
-	int resolved = false;
-	public RequestEntry(int delta, long address, int rw)
-	{
-		this.delta = delta;
-		this.address = address;
-		this.rw = rw;
 	}
 
 }
