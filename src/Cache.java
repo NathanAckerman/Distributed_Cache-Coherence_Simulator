@@ -12,50 +12,50 @@
  */
 public class Cache
 {
-    public int nsets;                       // number of sets
-    public int blocksize;                   // block size 
-    public int assoc;                       // associativity
-    public int miss_penalty;                // the miss penalty
-    public CacheBlock[][] blocks;   // a pointer tot he array of cache blocks
+	public int nsets;                       // number of sets
+	public int blocksize;                   // block size 
+	public int assoc;                       // associativity
+	public int miss_penalty;                // the miss penalty
+	public CacheBlock[][] blocks;   // a pointer tot he array of cache blocks
 
-    public Cache(int size, int blocksize, int assoc)
-    {
-        int nblocks = size * 1024 / blocksize;
+	public Cache(int size, int blocksize, int assoc)
+	{
+		int nblocks = size * 1024 / blocksize;
 
-        this.blocksize = blocksize;         // number of blocks in the cache
-        this.nsets = nblocks / assoc;       // number of sets (entries) in the cache
-        this.assoc = assoc;
+		this.blocksize = blocksize;         // number of blocks in the cache
+		this.nsets = nblocks / assoc;       // number of sets (entries) in the cache
+		this.assoc = assoc;
 
 
-        // Create the cahce blocks
-        this.blocks = new CacheBlock[this.nsets][this.assoc];
-        for(int i=0; i<this.nsets; i++)
-        {
-            for(int j=0; j<this.assoc; j++)
-            {
-                this.blocks[i][j] = new CacheBlock();
-            }
+		// Create the cahce blocks
+		this.blocks = new CacheBlock[this.nsets][this.assoc];
+		for(int i=0; i<this.nsets; i++)
+		{
+			for(int j=0; j<this.assoc; j++)
+			{
+				this.blocks[i][j] = new CacheBlock();
+			}
 
-        }
-    }
+		}
+	}
 
-    /**
-     * This is a simple cache block.
-     * Note that no actual data will be stored in the cache
-     */
-    protected class CacheBlock
-    {
-        public long tag;
-        public Boolean valid;
-        public Boolean dirty;
-        public int lru; // to be used to build the LRU stack for the blocks in a cache set
+	/**
+	 * This is a simple cache block.
+	 * Note that no actual data will be stored in the cache
+	 */
+	protected class CacheBlock
+	{
+		public long tag;
+		public Boolean valid;
+		public Boolean dirty;
+		public int lru; // to be used to build the LRU stack for the blocks in a cache set
 
-        public CacheBlock()
-        {
-            this.tag = 0;
-            this.valid = false;
-            this.dirty = false;
-            this.lru = 0;
-        }
-    }
+		public CacheBlock()
+		{
+			this.tag = 0;
+			this.valid = false;
+			this.dirty = false;
+			this.lru = 0;
+		}
+	}
 }
