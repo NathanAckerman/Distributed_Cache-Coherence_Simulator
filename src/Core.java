@@ -25,12 +25,23 @@ public class Core {
 		}
 	}
 
+	public void do_cycle()
+	{
+
+	}
+
+	public int get_dq_size()
+	{
+		return dq.size();
+	}
+
 }
 
 class RequestEntry {
 	int delta;
 	long address;
 	int rw;//0 for read, 1 for write
+	int resolved = false;
 	public RequestEntry(int delta, long address, int rw)
 	{
 		this.delta = delta;
