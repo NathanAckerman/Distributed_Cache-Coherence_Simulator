@@ -132,11 +132,10 @@ public class CacheSimulator
 
 	public static void main(String [] args) throws FileNotFoundException, IOException
 	{
-		boolean debug_mode;
 		if (args.length == 3) {
-			debug_mode = true;
+			Debug.debug_mode = true;
 		} else {
-			debug_mode = false;
+			Debug.debug_mode = false;
 		}
 
 		String config_file = args[0];
@@ -246,6 +245,7 @@ public class CacheSimulator
 	public static void do_simulation(Core[] core_arr)
 	{
 		System.out.println("Starting Simulation\n\n");
+		int cycle = 0;
 		boolean accesses_left = true;
 		while (accesses_left) {
 			//do single cycle
@@ -253,8 +253,46 @@ public class CacheSimulator
 				c.do_cycle();
 			}
 			accesses_left = update_accesses_left(core_arr);
+			if (!accesses_left) {
+				System.out.println("Simulation Done at cycle "+cycle);
+				break;
+			}
+			cycle++;
 		}
-		System.out.println("Simulation Done: TODO print stats\n\n");
+		if (Debug.debug_mode) {
+			System.out.println("\n\n");
+			System.out.println("******************************");
+			System.out.println("******************************");
+			print_cache_states(core_arr);
+		}
+		System.out.println("\n\n");
+		System.out.println("******************************");
+		System.out.println("******************************");
+		System.out.println("Global Stats: ");
+		print_global_stats(core_arr);
+	}
+
+	public static void print_cache_states(Core[] core_arr)
+	{
+		//TODO implement this method
+		//are we print l2 also? in which case we need arbiter reference?
+	}
+
+	public static void print_global_stats(Core[] core_arr)
+	{
+		//TODO still need to track and print breakdown of control/data messages
+		int total_misses = 0;
+		int total_miss_penalties = 0;
+
+		for (Core c : core_arr) {
+			total_misses += c.total_requests_missed;
+			total_miss_penalties += c.total_miss_penalty;
+		}
+		double avg_miss_penalty = (double)total_misses / (double)total_miss_penalties;
+		System.out.println("\nTotal l1 misses: "+total_misses);
+		System.out.println("\nTotal l1 miss time in cycles: "+total_miss_penalties);
+		System.out.println("\nAverage l1 miss time in cycles: "+avg_miss_penalty);
+
 
 	}
 
