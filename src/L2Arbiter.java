@@ -1,7 +1,9 @@
+import java.lang.Math;
+import java.util.HashMap;
+
 public final class L2Arbiter
 {
-	private static ArrayList<L2Piece> l2list = new ArrayList<L2Piece>();
-	private static Queue<RequestEntry> requests = new LinkedList<RequestEntry>();
+	private static L2Piece[] l2Caches;
 
 	// all these are length p
 	public static ArrayList<RequestEntry>[] l2_reqs;
@@ -10,21 +12,33 @@ public final class L2Arbiter
 	public static int[] cycle_mem_reqs;
 	//private static Hashmap<int, int> addrToCycleMadeExclusive;
 	
-	int dc;
-	int dm;
+	private static int dc;
+	private static int dm;
+	private static int num_cores;
+	private static int l2_addr_mask = 0;
 
-	private static L2Arbiter() { }
+	private static HashMap<CacheBlock, DirectoryEntry>[] directory = new HashMap<>(); 
 
-	public void init(int dc, int dm)
+
+	private L2Arbiter() { }
+
+	public static void init(int init_dc, int init_dm, int num_cores, int p)
 	{
 		// TODO do these
 		// init the lists
-		this.dc = dc;
-		this.dm = dm;
+		dc = init_dc;
+		dm = init_dm;
+
+		for (int i = 11; i < 11+p; i++) {
+			int mask_part = 1 << i;
+			l2_addr_mask |= mask_part;
+		}
+		
+
 	}
 
 	// TODO implement this
-	public static boolean inCache(RequestEntry)
+	public static boolean inCache(RequestEntry requestEntry)
 	{
 		return false;
 	}
@@ -32,7 +46,7 @@ public final class L2Arbiter
 	public static void do_cycle(int cycle)
 	{
 		int len = l2_reqs.length;
-		for (int core = 0, core < len; core++) {
+		for (int core = 0; core < len; core++) {
 			ArrayList<RequestEntry> req_list = l2_reqs[core];
 
 			/* get first request for this core */
@@ -51,7 +65,28 @@ public final class L2Arbiter
 			if (cycle < cycle_l2_reqs[core] + dc)
 				continue;
 
+			// At this point, we can service the request
+
 			/* hit */
+
+			L2Piece l2piece = l2Caches[getL2CoreID(req.address)];
+
+			CacheBlock cacheBlock = l2piece.inCache(req);
+
+			// Hit and its valid in L2 cache
+			if (cacheBlock != null) {
+				// If its a read request
+				if (req.rw == 0) {
+					// call function to change states to shared in directory
+				}
+				if (req.rw == 0 || (req.rw == 1 && cacheBlock.state == CacheState.EXCLUSIVE)){
+					// Read Request
+					return true;
+				}
+			}
+
+			
+
 			if (inCache(req)) {
 				// TODO cache coherence
 				req.resolved = true;
@@ -77,6 +112,10 @@ public final class L2Arbiter
 
 	public static void queueRequest(int core_id, RequestEntry req)
 	{
-		requests.add();
+		l2_reqs[core_id].add(req);
+	}
+
+	public static int getL2CoreID(long address) {
+		return (address & l2_addr_mask) >> 11;
 	}
 }

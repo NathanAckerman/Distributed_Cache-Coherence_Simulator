@@ -6,15 +6,22 @@ public class L1Cache extends Cache
 	{
 	}
 
+
+	// Why the boolean return type? 
 	public boolean access(RequestEntry req)
 	{
-		// TODO check if write and not exclusive
+		CacheBlock cacheBlock = inCache(req);
 
-		/* hit = no cache coherence necessary */
-		if (inCache(req))
-			return true;
+		// Hit and its valid
+		if (cacheBlock != null) {
+			if (req.rw == 0 || (req.rw == 1 && cacheBlock.state == CacheState.EXCLUSIVE)){
+				// Read Request
+				return true;
+			}
+		}
 
-		/* miss */
+		// Miss or hit but invalid
+		// send it to arbiter
 		L2Arbiter.queueRequest(core_id, req);
 		return false;
 	}

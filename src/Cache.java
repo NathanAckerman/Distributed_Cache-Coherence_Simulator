@@ -15,7 +15,7 @@ public class Cache
 	public int blocksize;                   // block size 
 	public int assoc;                       // associativity
 	public int miss_penalty;                // the miss penalty
-	public CacheBlock[][] blocks;   // a pointer tot he array of cache blocks
+	public CacheBlock[][] blocks;   // a pointer to the array of cache blocks
 
 	public Cache(int size, int blocksize, int assoc)
 	{
@@ -143,13 +143,38 @@ public class Cache
 		{
 			// The evicted block is dirty
 			this.cache.blocks[index][way].dirty = (access_type==0 ? false : true);
+			// Let L2 know that the block is dirty
 			return 2;
 		}
 	}
 
-	// TODO implement this
-	public boolean inCache(RequestEntry req)
+	/*
+	 * \brief Check if its in Cache
+	 * \param[in] req RequestEntry Object 
+	 *
+	 * \return true if hit, false if miss
+	 */
+	public CacheBlock inCache(RequestEntry req)
 	{
+		int block_address = (int) (req.address / (long) this.cache.blocksize);
+
+		int tag = block_address / this.cache.nsets;
+		int index = block_address - (tag * this.cache.nsets);
+
+		// Checking for cache hit
+		for(int i=0; i < this.cache.assoc; i++)
+		{
+			/* NOTE: 
+			 * L1 could be invalid but L2 can never be invalid
+			 */
+			if(this.cache.blocks[index][i].tag == tag && this.cache.blocks[index][i].valid) {
+				// Hit and valid
+				return this.cache.blocks[index][i];
+			}
+		}
+
+		// Consider all other case to be miss
+		return null;
 	}
 
 	/*
@@ -161,25 +186,5 @@ public class Cache
 	public boolean access(RequestEntry req)
 	{
 		return false;
-	}
-
-	/**
-	 * This is a simple cache block.
-	 * Note that no actual data will be stored in the cache
-	 */
-	protected class CacheBlock
-	{
-		public long tag;
-		public Boolean valid;
-		public Boolean dirty;
-		public int lru; // to be used to build the LRU stack for the blocks in a cache set
-
-		public CacheBlock()
-		{
-			this.tag = 0;
-			this.valid = false;
-			this.dirty = false;
-			this.lru = 0;
-		}
 	}
 }
