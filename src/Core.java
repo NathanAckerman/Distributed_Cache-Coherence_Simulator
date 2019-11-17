@@ -18,7 +18,7 @@ public class Core {
 
 	public void add_request_entry(int delta, long address, int rw)
 	{
-		RequestEntry new_req = new RequestEntry(delta, address, rw, l1cache);
+		RequestEntry new_req = new RequestEntry(delta, address, rw, l1cache, (rw==0 ? CacheState.SHARED : CacheState.EXCLUSIVE), core_num);
 		dq.add(new_req);
 	}
 

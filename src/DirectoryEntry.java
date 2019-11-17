@@ -3,7 +3,7 @@ import java.util.*;
 
 public class DirectoryEntry {
     public CacheState state;
-    public ArrayList<L1Cache> caches;
+    public ArrayList<Integer> coreNumbers;
 
     public DirectoryEntry(){
     }

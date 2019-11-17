@@ -1,15 +1,19 @@
 import java.lang.Math;
 import java.util.HashMap;
+import java.util.Queue;
 
 public final class L2Arbiter
 {
-	private static L2Piece[] l2Caches;
+	private static Core[] allCores;
 
 	// all these are length p
-	public static ArrayList<RequestEntry>[] l2_reqs;
-	public static ArrayList<RequestEntry>[] mem_reqs;
-	public static int[] cycle_l2_reqs;
-	public static int[] cycle_mem_reqs;
+	public static Queue<RequestEntry>[] data_lookup;
+	public static Queue<RequestEntry>[] mem_lookup;
+	public static Integer[] cycle_l2_reqs;
+	public static Integer[] cycle_mem_reqs;
+
+	public static ArrayList<MsgSentOutMap<Integer, Integer>>[] msg_sent_out;
+
 	//private static Hashmap<int, int> addrToCycleMadeExclusive;
 	
 	private static int dc;
@@ -17,15 +21,15 @@ public final class L2Arbiter
 	private static int num_cores;
 	private static int l2_addr_mask = 0;
 
-	private static HashMap<CacheBlock, DirectoryEntry>[] directory = new HashMap<>(); 
+	private static HashMap<CacheBlock, DirectoryEntry>[] directory; 
 
 
 	private L2Arbiter() { }
 
 	public static void init(int init_dc, int init_dm, int num_cores, int p)
 	{
-		// TODO do these
-		// init the lists
+		// TODO initialize list
+
 		dc = init_dc;
 		dm = init_dm;
 
@@ -37,6 +41,23 @@ public final class L2Arbiter
 
 	}
 
+	public static void send_msg(ArrayList<Integer> cores, RequestEntry requestEntry)
+	{
+		MsgSentOutMap<Integer, Integer> newMap = new MsgSentOutMap<>();
+		newMap.requestType = requestEntry.requestType;
+		
+		for(Integer i : cores) {
+			newMap.put(i, 0);
+		}
+
+		// TODO: Implement this inside Core
+		allCores[i].addToFulfillQueue(newMap, requestEntry);
+
+		msg_sent_out.add(newMap);
+	}
+
+
+
 	// TODO implement this
 	public static boolean inCache(RequestEntry requestEntry)
 	{
@@ -45,20 +66,16 @@ public final class L2Arbiter
 
 	public static void do_cycle(int cycle)
 	{
-		int len = l2_reqs.length;
+		int len = data_lookup.length;
 		for (int core = 0; core < len; core++) {
-			ArrayList<RequestEntry> req_list = l2_reqs[core];
+			Queue<RequestEntry> req_list = data_lookup[core];
 
 			/* get first request for this core */
-			RequestEntry req;
-			try  {
-				req = req_list.get(0);
-			} catch(Exception e) {
-				continue;
-			}
+			RequestEntry req = req_list.peek();
+			if (req == null) continue;
 
 			/* set when l2 was issued */
-			if (cycle_l2_reqs[core] == 0)
+			if (cycle_l2_reqs[core] == null)
 				cycle_l2_reqs[core] = cycle;
 
 			/* don't service l2 until time */
@@ -66,23 +83,17 @@ public final class L2Arbiter
 				continue;
 
 			// At this point, we can service the request
+			cycle_l2_reqs[core] = cycle;
 
-			/* hit */
 
 			L2Piece l2piece = l2Caches[getL2CoreID(req.address)];
-
 			CacheBlock cacheBlock = l2piece.inCache(req);
 
 			// Hit and its valid in L2 cache
 			if (cacheBlock != null) {
-				// If its a read request
-				if (req.rw == 0) {
-					// call function to change states to shared in directory
-				}
-				if (req.rw == 0 || (req.rw == 1 && cacheBlock.state == CacheState.EXCLUSIVE)){
-					// Read Request
-					return true;
-				}
+				resolveHit(cacheBlock, core, req);	
+			}else{
+				resolveMiss();
 			}
 
 			
@@ -112,10 +123,39 @@ public final class L2Arbiter
 
 	public static void queueRequest(int core_id, RequestEntry req)
 	{
-		l2_reqs[core_id].add(req);
+		data_lookup[core_id].add(req);
 	}
 
 	public static int getL2CoreID(long address) {
 		return (address & l2_addr_mask) >> 11;
+	}
+
+
+	public static void resolveHit(CacheBlock cacheBlock, int core, RequestEntry req) { 
+		// Check Directory
+		DirectoryEntry directoryEntry = directory[core].get(cacheBlock);
+
+		// DATA LOOKUP PORTION 
+		// If its a read
+		if (req.rw == 0) {
+			// Check the state of Directory Entry
+			if (directoryEntry.state == CacheState.EXCLUSIVE) {
+				// Send message to all cores to change to share 
+				ArrayList<Integer> notifyCores = directoryEntry.coreNumbers;
+				send_msg(notifyCores, req);
+			}else if (directoryEntry.state == CacheState.SHARED) {
+				// We can fulfill the request
+				directoryEntry.coreNumbers.add(req.requesterCoreNum);
+				req.resolved = true;
+			}
+		}else if(req.rw == 1) {
+			// Do this regardless of what the directory state its currently in
+			ArrayList<Integer> notifyCores = directoryEntry.coreNumbers;
+			send_msg(notifyCores, req);
+		}
+	}
+
+	public static void resolveMiss() {
+
 	}
 }
