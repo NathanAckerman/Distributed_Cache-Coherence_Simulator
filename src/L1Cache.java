@@ -34,7 +34,7 @@ public class L1Cache extends Cache
 				return true;
 
 		// otherwise send to arbiter
-		L2Arbiter.queueRequest(core_id, req);
+		L2Arbiter.queueRequest(req);
 		return false;
 	}
 

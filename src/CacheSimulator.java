@@ -10,6 +10,9 @@ import java.lang.IllegalArgumentException;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.Math;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Queue;
 
 
 public class CacheSimulator
@@ -88,6 +91,7 @@ public class CacheSimulator
 		int access_type;
 		int res;
 
+
 		int number_of_cores = (int)Math.pow(2,p);
 		Core[] core_arr = new Core[number_of_cores];
 
@@ -109,7 +113,7 @@ public class CacheSimulator
 		try(BufferedReader br = new BufferedReader(new FileReader(trace_file))) 
 		{
 			for(String line; (line = br.readLine()) != null; ) {
-				splitted = line.split(" ", 4);
+				splitted = line.split("[ |\t]", 4);
 				req_cycle = Integer.parseInt(splitted[0]);
 				core_id = Integer.parseInt(splitted[1]);
 				address = Long.decode(splitted[3]);
@@ -124,6 +128,11 @@ public class CacheSimulator
 		}
 		
 		L2Arbiter.init(dc, dm, number_of_cores, p, core_arr);
+
+		Queue<RequestEntry>[] data_lookup = L2Arbiter.data_lookup;
+		Queue<RequestEntry>[] mem_lookup = L2Arbiter.mem_lookup;
+		ArrayList<MsgSentOutMap<Integer, Integer>>[] msg_sent_out = L2Arbiter.msg_sent_out;
+		HashMap<CacheBlock, DirectoryEntry>[] directory = L2Arbiter.directory;
 		
 		do_simulation(core_arr);
 	}
@@ -174,7 +183,7 @@ public class CacheSimulator
 			total_misses += c.total_requests_missed;
 			total_miss_penalties += c.total_miss_penalty;
 		}
-		double avg_miss_penalty = (double)total_misses / (double)total_miss_penalties;
+		double avg_miss_penalty = (double)total_miss_penalties / (double)total_misses;
 		System.out.println("\nTotal l1 misses: "+total_misses);
 		System.out.println("\nTotal l1 miss time in cycles: "+total_miss_penalties);
 		System.out.println("\nAverage l1 miss time in cycles: "+avg_miss_penalty);

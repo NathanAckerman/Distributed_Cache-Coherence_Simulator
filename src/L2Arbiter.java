@@ -9,7 +9,7 @@ public final class L2Arbiter
 	public static Queue<RequestEntry>[] data_lookup;
 	public static Queue<RequestEntry>[] mem_lookup;
 	public static ArrayList<MsgSentOutMap<Integer, Integer>>[] msg_sent_out;
-	private static HashMap<CacheBlock, DirectoryEntry>[] directory;
+	public static HashMap<CacheBlock, DirectoryEntry>[] directory;
 	
 	private static int dc;
 	private static int dm;
@@ -118,52 +118,54 @@ public final class L2Arbiter
 
 			/* get first request for this core */
 			RequestEntry req = req_list.peek();
-			if (req == null) continue;
-			
-			if (req.cycle_l2_start == null)
-				req.cycle_l2_start = cycle;
+			if (req != null) {
 
-			/* don't service l2 until time */
-			if (cycle < req.cycle_l2_start + dc)
-				continue;
+				if (req.cycle_l2_start == null)
+					req.cycle_l2_start = cycle;
 
-			// At this point, we can service the request
+				/* don't service l2 until time */
+				if (cycle < req.cycle_l2_start + dc)
+					continue;
 
-			req_list.remove();
+				// At this point, we can service the request
+
+				req_list.remove();
 
 
-			L2Piece l2piece = allCores[getL2CoreID(req.address)].l2piece;
-			CacheBlock cacheBlock = allCores[req.requesterCoreNum].l2piece.getCacheBlock(req);
+				L2Piece l2piece = allCores[core].l2piece;
+				CacheBlock cacheBlock = allCores[core].l2piece.getCacheBlock(req);
 
-			// Hit and its valid in L2 cache
-			if (cacheBlock != null)
-				resolveHit(cacheBlock, req);	
-			else
-				resolveMiss(req);
+				// Hit and its valid in L2 cache
+				if (cacheBlock != null)
+					resolveHit(cacheBlock, req);
+				else
+					resolveMiss(req);
+			}
 
 			Queue<RequestEntry> mem_list = mem_lookup[core];
 			RequestEntry mem_req = mem_list.peek();
+			if (mem_req != null) {
+				/* set when mem was issued */
+				if (mem_req.cycle_mem_start == null)
+					mem_req.cycle_mem_start = cycle;
 
-			/* set when mem was issued */
-			if (mem_req.cycle_mem_start == null)
-				mem_req.cycle_mem_start = cycle;
+				/* don't service mem until time */
+				if (cycle < mem_req.cycle_mem_start + dm)
+					continue;
 
-			/* don't service mem until time */
-			if (cycle < mem_req.cycle_mem_start + dm)
-				continue;
+				// At this point, mem request can be fulfilled
 
-			// At this point, mem request can be fulfilled
+				mem_list.remove();
 
-			mem_list.remove();
-
-			resolveMemAccess(mem_req);
-
+				resolveMemAccess(mem_req);
+			}
 		}
 	}
 
-	public static void queueRequest(int core_id, RequestEntry req)
+	public static void queueRequest(RequestEntry req)
 	{
-		data_lookup[core_id].add(req);
+		int core = getL2CoreID(req.address);
+		data_lookup[core].add(req);
 	}
 
 	public static int getL2CoreID(long address) {
@@ -173,7 +175,7 @@ public final class L2Arbiter
 
 	public static void resolveHit(CacheBlock cacheBlock, RequestEntry req) { 
 		// Check Directory
-		DirectoryEntry directoryEntry = directory[req.requesterCoreNum].get(cacheBlock);
+		DirectoryEntry directoryEntry = directory[getL2CoreID(req.address)].get(cacheBlock);
 
 		// DATA LOOKUP PORTION 
 		// If its a read
@@ -196,7 +198,7 @@ public final class L2Arbiter
 	}
 
 	public static void resolveMiss(RequestEntry req) {
-		mem_lookup[req.requesterCoreNum].add(req);
+		mem_lookup[getL2CoreID(req.address)].add(req);
 	}
 
 	public static void resolveMemAccess(RequestEntry mem_req) {
@@ -208,8 +210,10 @@ public final class L2Arbiter
 			CacheBlock newCacheBlock = mem_l2_piece.getCacheBlock(mem_req);
 			DirectoryEntry newEntry = new DirectoryEntry(mem_req);
 
-			directory[mem_req.requesterCoreNum].put(newCacheBlock, newEntry);
+			directory[getL2CoreID(mem_req.address)].put(newCacheBlock, newEntry);
+			mem_req.resolved = true;
 		} else {
+			// only if two pending requests
 			data_lookup[mem_has_core.core_num].add(mem_req);
 		}
 	}

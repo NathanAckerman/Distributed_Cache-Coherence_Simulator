@@ -37,7 +37,7 @@ public class Core {
 
 	public void print_request(RequestEntry re)
 	{
-		Debug.println("address:"+re.address+" rw:"+re.rw+" delta:"+re.delta);
+		Debug.println("address:"+String.format("0x%08X", re.address)+" rw:"+re.rw+" delta:"+re.delta);
 	}
 
 	public void fulfill_request()
@@ -58,7 +58,6 @@ public class Core {
 
 	public void do_cycle()
 	{
-
 		fulfill_request();
 
 		if (finished_all_requests) {
@@ -75,31 +74,20 @@ public class Core {
 		}
 		if (head.delta > 0) {
 			head.delta--;
-			if (head.delta == 0) {//ready to be issued
-				boolean hit = l1cache.access(head);
-				if (hit) {
-					Debug.println("Cache hit for core "+core_num+" at cycle "+cycle+" for request:");
-					print_request(head);
-					dq.remove();
-				} else {
-					Debug.println("Cache miss for core "+core_num+" at cycle "+cycle+" for request:");
-					print_request(head);
-					head.cycle_issued = cycle;
-				}
+		} else if (head.delta == 0) {
+			boolean hit = l1cache.access(head);
+			if (hit) {
+				Debug.println("Cache hit for core "+core_num+" at cycle "+cycle+" for request:");
+				print_request(head);
+				dq.remove();
+			} else {
+				Debug.println("Cache miss for core "+core_num+" at cycle "+cycle+" for request:");
+				print_request(head);
+				head.cycle_issued = cycle;
 			}
+			head.delta--;
 		} else {
-			if (cycle == 0 && head.delta <= 0) {//edge case where first cycle has req
-				boolean hit = l1cache.access(head);
-				if (hit) {
-					Debug.println("Cache hit for core "+core_num+" at cycle "+cycle+" for request:");
-					print_request(head);
-					dq.remove();
-				} else {
-					Debug.println("Cache miss for core "+core_num+" at cycle "+cycle+" for request:");
-					print_request(head);
-					head.cycle_issued = cycle;
-				}
-			} else if (head.resolved) {
+			if (head.resolved) {
 				//this req is now done
 				process_resolved_request();
 			}
