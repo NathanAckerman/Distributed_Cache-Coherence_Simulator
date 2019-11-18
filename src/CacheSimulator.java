@@ -149,7 +149,9 @@ public class CacheSimulator
 			L2Arbiter.do_cycle(cycle);
 			accesses_left = update_accesses_left(core_arr);
 			if (!accesses_left) {
+				System.out.println("\n\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n");
 				System.out.println("Simulation Done at cycle "+cycle);
+				System.out.println("\n\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 				break;
 			}
 			cycle++;
@@ -161,9 +163,6 @@ public class CacheSimulator
 			print_cache_states(core_arr);
 		}
 		System.out.println("\n\n");
-		System.out.println("******************************");
-		System.out.println("******************************");
-		System.out.println("Global Stats: ");
 		print_global_stats(core_arr);
 	}
 
@@ -175,18 +174,26 @@ public class CacheSimulator
 
 	public static void print_global_stats(Core[] core_arr)
 	{
-		//TODO still need to track and print breakdown of control/data messages
+		System.out.println("******************************");
+		System.out.println("******************************");
+		System.out.println("Global Stats:\n");
+		
+		System.out.println("Data msgs: "+L2Arbiter.num_data_msgs);
+		System.out.println("Control msgs: "+L2Arbiter.num_control_msgs);
+		System.out.println("\n");
+
 		int total_misses = 0;
 		int total_miss_penalties = 0;
 
 		for (Core c : core_arr) {
 			total_misses += c.total_requests_missed;
 			total_miss_penalties += c.total_miss_penalty;
+			System.out.println("Core "+c.core_num+" completed at cycle "+c.cycle_done);
 		}
 		double avg_miss_penalty = (double)total_miss_penalties / (double)total_misses;
-		System.out.println("\nTotal l1 misses: "+total_misses);
-		System.out.println("\nTotal l1 miss time in cycles: "+total_miss_penalties);
-		System.out.println("\nAverage l1 miss time in cycles: "+avg_miss_penalty);
+		System.out.println("\nTotal L1 misses: "+total_misses);
+		System.out.println("Total L1 miss time in cycles: "+total_miss_penalties);
+		System.out.println("Average L1 miss time in cycles: "+avg_miss_penalty);
 
 
 	}

@@ -15,6 +15,10 @@ public final class L2Arbiter
 	private static int dm;
 	private static int num_cores;
 	private static long l2_addr_mask = 0;
+	private static int cur_cycle = 0;
+
+	public static int num_data_msgs = 0;
+	public static int num_control_msgs = 0;
 
 	private L2Arbiter() { }
 
@@ -98,6 +102,7 @@ public final class L2Arbiter
 
 	public static void do_cycle(int cycle)
 	{
+		cur_cycle = cycle;
 		check_msg_sent_out_loop(cycle);
 		data_lookup_func(cycle);
 	}
@@ -175,6 +180,8 @@ public final class L2Arbiter
 
 	public static void resolveHit(CacheBlock cacheBlock, RequestEntry req) { 
 		// Check Directory
+		Debug.println("L2 hit on cycle "+cur_cycle+" for request: ");
+		Core.print_request(req);
 		DirectoryEntry directoryEntry = directory[getL2CoreID(req.address)].get(cacheBlock);
 
 		// DATA LOOKUP PORTION 
@@ -198,14 +205,19 @@ public final class L2Arbiter
 	}
 
 	public static void resolveMiss(RequestEntry req) {
+		Debug.println("L2 miss on cycle "+cur_cycle+" for request: ");
+		Core.print_request(req);
 		mem_lookup[getL2CoreID(req.address)].add(req);
 	}
 
 	public static void resolveMemAccess(RequestEntry mem_req) {
+		Debug.println("Mem access resolving on cycle "+cur_cycle+" for request:");
+		Core.print_request(mem_req);
 		Core mem_has_core = allCores[getL2CoreID(mem_req.address)];
 		L2Piece mem_l2_piece = mem_has_core.l2piece;
 		CacheBlock cacheBlock = mem_l2_piece.getCacheBlock(mem_req);
 		if (cacheBlock == null) {
+			Debug.println("Creating new directory entry for this request");
 			mem_l2_piece.add(mem_req.address, mem_req.rw);
 			CacheBlock newCacheBlock = mem_l2_piece.getCacheBlock(mem_req);
 			DirectoryEntry newEntry = new DirectoryEntry(mem_req);
@@ -214,12 +226,14 @@ public final class L2Arbiter
 			mem_req.resolved = true;
 		} else {
 			// only if two pending requests
+			Debug.println("This mem request had a previous one pending for the same block so we need to grab the value from that core if it was exclusive");
 			data_lookup[mem_has_core.core_num].add(mem_req);
 		}
 	}
 
 	public static void removeL1(long address, int core_num)
 	{
+		L2Arbiter.num_control_msgs++;
 		int l2piece_core_id = getL2CoreID(address);
 
 		CacheBlock key = allCores[l2piece_core_id].l2piece.getCacheBlock(address);

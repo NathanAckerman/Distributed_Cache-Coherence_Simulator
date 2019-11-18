@@ -35,9 +35,9 @@ public class Core {
 		this.fulfillQueue.add(map);
 	}
 
-	public void print_request(RequestEntry re)
+	public static void print_request(RequestEntry re)
 	{
-		Debug.println("address:"+String.format("0x%08X", re.address)+" rw:"+re.rw+" delta:"+re.delta);
+		Debug.println("address:"+String.format("0x%08X", re.address)+" rw:"+re.rw+" orig_core:"+re.requesterCoreNum+" delta:"+re.delta);
 	}
 
 	public void fulfill_request()
@@ -46,6 +46,7 @@ public class Core {
 		if (map == null) 
 			return;
 
+		L2Arbiter.num_control_msgs++;
 		RequestEntry req = map.request;
 
 		// If it is a read
@@ -58,14 +59,12 @@ public class Core {
 
 	public void do_cycle()
 	{
+		Debug.println("Core "+core_num+" is starting its do_cycle for cycle "+cycle);
 		fulfill_request();
 
 		if (finished_all_requests) {
+			Debug.println("This core has no more requests");
 			return;
-		} else if (dq.size() == 0) {
-			Debug.println("Core "+core_num+" is completing last request at cycle "+cycle);
-			cycle_done = cycle;
-			finished_all_requests = true;
 		}
 
 		RequestEntry head = dq.peek();
@@ -73,10 +72,12 @@ public class Core {
 			return;
 		}
 		if (head.delta > 0) {
+			Debug.println("This core's next request is not until a later cycle");
 			head.delta--;
 		} else if (head.delta == 0) {
 			boolean hit = l1cache.access(head);
 			if (hit) {
+				Debug.println("Request Completed");
 				Debug.println("Cache hit for core "+core_num+" at cycle "+cycle+" for request:");
 				print_request(head);
 				dq.remove();
@@ -97,7 +98,13 @@ public class Core {
 	}
 
 	public void process_resolved_request() {
+		L2Arbiter.num_data_msgs++;
 		RequestEntry head = dq.remove();
+		if(dq.size() == 0) {
+			Debug.println("Core "+core_num+" is completing last request at cycle "+cycle);
+			cycle_done = cycle;
+			finished_all_requests = true;
+		}
 		total_requests_missed++;
 		int miss_penalty = cycle - head.cycle_issued;
 		total_miss_penalty += miss_penalty;
