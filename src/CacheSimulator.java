@@ -14,13 +14,6 @@ import java.lang.Math;
 
 public class CacheSimulator
 {
-	private Cache cache;
-
-	public CacheSimulator(int size, int blocksize, int assoc)
-	{
-		this.cache = new Cache(size, blocksize, assoc);
-	}
-
 	public static void main(String [] args) throws FileNotFoundException, IOException
 	{
 		if (args.length == 3) {
@@ -99,7 +92,11 @@ public class CacheSimulator
 		Core[] core_arr = new Core[number_of_cores];
 
 		for (int i = 0; i < number_of_cores; i++) {
+			L1Cache l1cache = new L1Cache(Math.pow(2, n1), Math.pow(2, b), Math.pow(2, a), i);
+			L2Piece l2piece = new L2Piece(Math.pow(2, n2), Math.pow(2, b), Math.pow(2, a), i);
 			core_arr[i] = new Core(i);
+			core_arr[i].l1cache = l1cache;
+			core_arr[i].l2piece = l2piece;
 		}
 
 		int[] last_req_cycle = new int[number_of_cores];//keep track of last req to know the delta
@@ -126,11 +123,9 @@ public class CacheSimulator
 			}
 		}
 		
-		//TODO build caches on cores
+		L2Arbiter.init(dc, dm, number_of_cores, p, core_arr);
 		
 		do_simulation(core_arr);
-		
-
 	}
 
 	public static void do_simulation(Core[] core_arr)
@@ -140,9 +135,9 @@ public class CacheSimulator
 		boolean accesses_left = true;
 		while (accesses_left) {
 			//do single cycle
-			L2Arbiter.do_cycle(cycle);
 			for (Core c : core_arr)
 				c.do_cycle();
+			L2Arbiter.do_cycle(cycle);
 			accesses_left = update_accesses_left(core_arr);
 			if (!accesses_left) {
 				System.out.println("Simulation Done at cycle "+cycle);

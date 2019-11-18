@@ -16,15 +16,16 @@ public class Cache
 	public int assoc;                       // associativity
 	public int miss_penalty;                // the miss penalty
 	public CacheBlock[][] blocks;   // a pointer to the array of cache blocks
+	public int core_id;
 
-	public Cache(int size, int blocksize, int assoc)
+	public Cache(int size, int blocksize, int assoc, int core_id)
 	{
 		int nblocks = size * 1024 / blocksize;
 
 		this.blocksize = blocksize;         // number of blocks in the cache
 		this.nsets = nblocks / assoc;       // number of sets (entries) in the cache
 		this.assoc = assoc;
-
+		this.core_id = core_id;
 
 		// Create the cahce blocks
 		this.blocks = new CacheBlock[this.nsets][this.assoc];
@@ -69,17 +70,13 @@ public class Cache
 		/**
 		 * Check for cache hit
 		 */
-		for(i=0; i < this.cache.assoc; i++)
-		{
-			if(this.cache.blocks[index][i].tag == tag 
-					&& this.cache.blocks[index][i].valid)
-			{
+		for (i=0; i < this.cache.assoc; i++) {
+			if (this.cache.blocks[index][i].tag == tag 
+					&& this.cache.blocks[index][i].valid) {
 				// HIT!
 				this.updateLRU(index, i);
-				if(access_type == 1)
-				{
+				if (access_type == 1)
 					this.cache.blocks[index][i].dirty = true;
-				}
 				return 0;
 			}
 		}
@@ -88,38 +85,28 @@ public class Cache
 		 * If not a hit, then it is a miss :(
 		 * Now, we are going to look for an invalid entry
 		 */
-		for(way=0; way<this.cache.assoc; way++)
-		{
-			if(!this.cache.blocks[index][way].valid)
-			{
+		for (way=0; way<this.cache.assoc; way++) {
+			if (!this.cache.blocks[index][way].valid) {
 				// Found an invalid entry
 				this.cache.blocks[index][way].valid = true;
 				this.cache.blocks[index][way].tag = tag;
 				this.cache.blocks[index][way].lru = way;
 				this.updateLRU(index, way);
-				if(access_type==0)
-				{
-					this.cache.blocks[index][way].dirty = false; 
-				}
-				else
-				{
-					this.cache.blocks[index][way].dirty = true;
-				}
+				this.cache.blocks[index][way].dirty = (access_type != 0);
+				this.cache.blocks[index][i].address = address;
 				return 1;
 
 			}
 		}
 
 		/**
-		 * No dirty block found :(
+		 * No invalid block found :(
 		 * Now, we are going to find the least recently used block
 		 */
 		max = this.cache.blocks[index][0].lru;
 		way = 0;
-		for(i=0; i<this.cache.assoc; i++)
-		{
-			if(this.cache.blocks[index][i].lru > max)
-			{
+		for(i=0; i<this.cache.assoc; i++) {
+			if(this.cache.blocks[index][i].lru > max) {
 				max = this.cache.blocks[index][i].lru;
 				way = i;
 			}
@@ -133,30 +120,30 @@ public class Cache
 		this.updateLRU(index, way);
 
 		// Check the condition of the evicted block
-		if(!this.cache.blocks[index][way].dirty)
-		{
-			// The evicted block is clean!
-			this.cache.blocks[index][way].dirty = (access_type==0 ? false : true) ;
+		this.cache.blocks[index][way].dirty = (access_type != 0);
+		handleEvictedBlock(this.cache.blocks[index][way]);
+
+		this.cache.blocks[index][i].address = address;
+		if (!this.cache.blocks[index][way].dirty)
 			return 1;
-		}
 		else
-		{
-			// The evicted block is dirty
-			this.cache.blocks[index][way].dirty = (access_type==0 ? false : true);
-			// Let L2 know that the block is dirty
 			return 2;
-		}
+	}
+
+	public CacheBlock getCacheBlock(RequestEntry req)
+	{
+		return getCacheBlock(req.address);
 	}
 
 	/*
 	 * \brief Check if its in Cache
 	 * \param[in] req RequestEntry Object 
 	 *
-	 * \return true if hit, false if miss
+	 * \return cacheBlock if it exist, null otherwise
 	 */
-	public CacheBlock inCache(RequestEntry req)
+	public CacheBlock getCacheBlock(long address)
 	{
-		int block_address = (int) (req.address / (long) this.cache.blocksize);
+		int block_address = (int) (address / (long) this.cache.blocksize);
 
 		int tag = block_address / this.cache.nsets;
 		int index = block_address - (tag * this.cache.nsets);
@@ -185,6 +172,14 @@ public class Cache
 	 */
 	public boolean access(RequestEntry req)
 	{
+		System.out.println("you fucked up and called the abstract access looool");
+		System.exit(1);
 		return false;
+	}
+
+	public void handleEvictedBlock(CacheBlock cacheBlock)
+	{
+		System.out.println("you fucked up and called the abstract handle evicted block looool");
+		System.exit(1);
 	}
 }

@@ -8,7 +8,8 @@
 		public Boolean valid;
 		public Boolean dirty;
 		public int lru; // to be used to build the LRU stack for the blocks in a cache set
-		public CacheState state;
+        public CacheState state;
+        public long address; // last address used
 
 		public CacheBlock()
 		{
@@ -16,6 +17,7 @@
 			this.valid = false;
 			this.dirty = false;
 			this.lru = 0;
-			this.state = CacheState.INVALIDATED;
+            this.state = CacheState.INVALIDATED;
+            this.address = 0;
 		}
 	}

@@ -1,28 +1,52 @@
 public class L1Cache extends Cache
 {
-	// TODO init instance vars
-
-	public L1Cache(int miss_penalty, int core_id, ...)
+	public L1Cache(int size, int blocksize, int assoc, int core_id)
 	{
+		super(size, blocksize, assoc, core_id);
+	}
+
+	public void updateEntry(RequestEntry req) 
+	{
+		CacheBlock cacheBlock = this.getCacheBlock(req);
+		if (cacheBlock == null) {
+			System.out.println("Panic");
+			System.exit(1);
+		}
+		
+		if (req.requestType == CacheState.SHARED) {
+			cacheBlock.state = CacheState.SHARED;
+		}else if(req.requestType == CacheState.EXCLUSIVE) {
+			cacheBlock.state = CacheState.INVALIDATED;
+			cacheBlock.valid = false;
+		}
 	}
 
 
 	// Why the boolean return type? 
 	public boolean access(RequestEntry req)
 	{
-		CacheBlock cacheBlock = inCache(req);
+		CacheBlock cacheBlock = getCacheBlock(req);
 
-		// Hit and its valid
-		if (cacheBlock != null) {
-			if (req.rw == 0 || (req.rw == 1 && cacheBlock.state == CacheState.EXCLUSIVE)){
-				// Read Request
+		int ret = cache_access(req.address, req.rw);
+		// hit
+		if (ret == 0)
+			if (req.rw == 0 || (req.rw == 1 && cacheBlock.state == CacheState.EXCLUSIVE))
 				return true;
-			}
-		}
 
-		// Miss or hit but invalid
-		// send it to arbiter
+		// otherwise send to arbiter
 		L2Arbiter.queueRequest(core_id, req);
 		return false;
 	}
+
+	public void handleEvictedBlock(CacheBlock cacheblock)
+	{
+		L2Arbiter.removeL1(cacheblock.address, core_id);
+	}
+
+	public void invalidate(long address)
+	{
+		CacheBlock cache_block = getCacheBlock(address);
+		cache_block.valid = 0;
+	}
+
 }

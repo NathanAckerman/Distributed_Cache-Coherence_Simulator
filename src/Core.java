@@ -4,8 +4,9 @@ public class Core {
 	int core_num;
 	int cycle = 0;
 	Queue<RequestEntry> dq = new LinkedList<RequestEntry>();
-	Cache l1cache = new L1Cache();
-	Cache l2piece = new L2Piece();
+	Queue<MsgSentOutMap<Integer, Integer>> fulfillQueue = new LinkedList<MsgSentOutMap<Integer, Integer>>();
+	L1Cache l1cache = new L1Cache();
+	L2Piece l2piece = new L2Piece();
 	boolean finished_all_requests = false;
 	public int cycle_done = 0;
 	public int total_requests_missed = 0;
@@ -29,13 +30,38 @@ public class Core {
 		}
 	}
 
+	public void addToFulfillQueue(MsgSentOutMap<Integer, Integer> map) 
+	{
+		this.fulfillQueue.add(map);
+	}
+
 	public void print_request(RequestEntry re)
 	{
 		Debug.println("address:"+re.address+" rw:"+re.rw+" delta:"+re.delta);
 	}
 
+	public void fulfill_request()
+	{
+		MsgSentOutMap<Integer, Integer> map = fulfillQueue.remove();
+
+		if (map == null) 
+			return;
+
+		RequestEntry req = map.request;
+
+		// If it is a read
+		l1cache.updateEntry(req);
+		map.put(this.core_num, 1);
+
+		return;
+		
+	}
+
 	public void do_cycle()
 	{
+
+		fulfill_request();
+
 		if (finished_all_requests) {
 			return;
 		} else if (dq.size() == 0) {
@@ -88,6 +114,10 @@ public class Core {
 		total_requests_missed++;
 		int miss_penalty = cycle - head.cycle_issued;
 		total_miss_penalty += miss_penalty;
+
+		l1cache.cache_access(head.address, head.rw);
+		CacheBlock cacheBlock = l1cache.getCacheBlock(head);
+		cacheBlock.state = head.requestType;
 
 		//debug printing
 		Debug.println("\n");
