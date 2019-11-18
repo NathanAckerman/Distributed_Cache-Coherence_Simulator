@@ -1,6 +1,5 @@
 import java.lang.Math;
-import java.util.HashMap;
-import java.util.Queue;
+import java.util.*;
 
 public final class L2Arbiter
 {
@@ -9,7 +8,7 @@ public final class L2Arbiter
 	// all these are length p
 	public static Queue<RequestEntry>[] data_lookup;
 	public static Queue<RequestEntry>[] mem_lookup;
-	public static ArrayList<MsgSentOutMap<Integer, Integer>>[] msg_sent_out;
+	public static ArrayList<MsgSentOutMap>[] msg_sent_out;
 	private static HashMap<CacheBlock, DirectoryEntry>[] directory;
 	
 	private static int dc;

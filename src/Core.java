@@ -4,7 +4,7 @@ public class Core {
 	int core_num;
 	int cycle = 0;
 	Queue<RequestEntry> dq = new LinkedList<RequestEntry>();
-	Queue<MsgSentOutMap<Integer, Integer>> fulfillQueue = new LinkedList<MsgSentOutMap<Integer, Integer>>();
+	Queue<MsgSentOutMap> fulfillQueue = new LinkedList<MsgSentOutMap>();
 	L1Cache l1cache = new L1Cache();
 	L2Piece l2piece = new L2Piece();
 	boolean finished_all_requests = false;
@@ -30,7 +30,7 @@ public class Core {
 		}
 	}
 
-	public void addToFulfillQueue(MsgSentOutMap<Integer, Integer> map) 
+	public void addToFulfillQueue(MsgSentOutMap map) 
 	{
 		this.fulfillQueue.add(map);
 	}

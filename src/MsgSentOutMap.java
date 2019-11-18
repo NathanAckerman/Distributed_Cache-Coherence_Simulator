@@ -1,5 +1,6 @@
 import java.util.HashMap;
 
-public class MsgSentOutMap extends HashMap<K,V>{
+public class MsgSentOutMap extends HashMap<Integer, Integer>
+{
     public CacheState requestType;
 }
