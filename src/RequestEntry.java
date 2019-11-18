@@ -5,6 +5,8 @@ class RequestEntry
 	public int rw; // 0 for read, 1 for write
 	public boolean resolved = false;
 	public int cycle_issued;
+	public Integer cycle_l2_start = null;
+	public Integer cycle_mem_start = null;
 	public L1Cache l1cache; 
 	public CacheState requestType;
 	public int requesterCoreNum;
@@ -17,6 +19,7 @@ class RequestEntry
 		this.l1cache = l1cache;
 		this.requestType = requestType;
 		this.requesterCoreNum = requesterCoreNum;
+				
 	}
 
 }
