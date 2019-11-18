@@ -46,7 +46,7 @@ public class L1Cache extends Cache
 	public void invalidate(long address)
 	{
 		CacheBlock cache_block = getCacheBlock(address);
-		cache_block.valid = 0;
+		cache_block.valid = false;
 	}
 
 }

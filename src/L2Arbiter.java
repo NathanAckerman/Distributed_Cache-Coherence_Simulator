@@ -1,6 +1,5 @@
 import java.lang.Math;
-import java.util.HashMap;
-import java.util.Queue;
+import java.util.*;
 
 public final class L2Arbiter
 {
@@ -15,17 +14,17 @@ public final class L2Arbiter
 	private static int dc;
 	private static int dm;
 	private static int num_cores;
-	private static int l2_addr_mask = 0;
-
+	private static long l2_addr_mask = 0;
 
 	private L2Arbiter() { }
 
+	@SuppressWarnings("unchecked")
 	public static void init(int init_dc, int init_dm, int init_num_cores, int p, Core[] init_all_cores)
 	{
-		data_lookup = new Queue<RequestEntry>[init_num_cores];
-		mem_lookup = new Queue<RequestEntry>[init_num_cores];
-		msg_sent_out = new ArrayList<MsgSentOutMap<Integer, Integer>>[init_num_cores];
-		directory = new HashMap<CacheBlock, DirectoryEntry>[init_num_cores];
+		data_lookup = (LinkedList<RequestEntry>[])new LinkedList<?>[init_num_cores];
+		mem_lookup = (LinkedList<RequestEntry>[])new LinkedList<?>[init_num_cores];
+		msg_sent_out = (ArrayList<MsgSentOutMap<Integer, Integer>>[])new ArrayList<?>[init_num_cores];
+		directory = (HashMap<CacheBlock, DirectoryEntry>[])new HashMap<?, ?>[init_num_cores];
 
 
 		for (int i = 0; i < init_num_cores; i++ ){
@@ -41,11 +40,9 @@ public final class L2Arbiter
 		allCores = init_all_cores;
 
 		for (int i = 11; i < 11+p; i++) {
-			int mask_part = 1 << i;
+			long mask_part = 1 << i;
 			l2_addr_mask |= mask_part;
 		}
-		
-
 	}
 
 	public static void send_msg(ArrayList<Integer> cores, RequestEntry requestEntry)
@@ -54,18 +51,18 @@ public final class L2Arbiter
 		newMap.requestType = requestEntry.requestType;
 		newMap.request = requestEntry;
 		
-		for(Integer i : cores) {
+		for (Integer i : cores)
 			newMap.put(i, 0);
-		}
 
-		allCores[i].addToFulfillQueue(newMap);
+		for (Integer i : cores)
+			allCores[i].addToFulfillQueue(newMap);
 
-		msg_sent_out.add(newMap);
+		msg_sent_out[getL2CoreID(requestEntry.address)].add(newMap);
 	}
 
 	public static void check_msg_sent_out(int core_num)
 	{
-		ArrayList<MsgSentOutMap<Integer, Integer>> completedRequests;
+		ArrayList<MsgSentOutMap<Integer, Integer>> completedRequests = new ArrayList<>();
 
 		// Loop through to check all the finished mappings
 		for(MsgSentOutMap<Integer, Integer> msgOut : msg_sent_out[core_num]) {
@@ -78,18 +75,17 @@ public final class L2Arbiter
 				}
 			}
 
-			if(isFinished) {
+			if (isFinished)
 				completedRequests.add(msgOut);
-			}
 		}
 
 		// Remove from the MsgSentOutMap
-		for(MsgSentOutMap<Integer, Integer> msgOut : completedRequests){
+		for (MsgSentOutMap<Integer, Integer> msgOut : completedRequests) {
 			msg_sent_out[core_num].remove(msgOut);
 			msgOut.request.resolved = true;
 			Core mem_req_core = allCores[core_num];
 			L2Piece mem_l2_piece = mem_req_core.l2piece;
-			CacheBlock cacheBlock = mem_l2_piece.getCacheBlock();
+			CacheBlock cacheBlock = mem_l2_piece.getCacheBlock(msgOut.request.address);
 
 			if (msgOut.requestType == CacheState.EXCLUSIVE) {
 				DirectoryEntry newDirectory = new DirectoryEntry(msgOut.request);
@@ -136,12 +132,12 @@ public final class L2Arbiter
 			req_list.remove();
 
 
-			L2Piece l2piece = l2Caches[getL2CoreID(req.address)];
+			L2Piece l2piece = allCores[getL2CoreID(req.address)].l2piece;
 			CacheBlock cacheBlock = allCores[req.requesterCoreNum].l2piece.getCacheBlock(req);
 
 			// Hit and its valid in L2 cache
 			if (cacheBlock != null)
-				resolveHit(cacheBlock, core, req);	
+				resolveHit(cacheBlock, req);	
 			else
 				resolveMiss(req);
 
@@ -171,7 +167,7 @@ public final class L2Arbiter
 	}
 
 	public static int getL2CoreID(long address) {
-		return (address & l2_addr_mask) >> 11;
+		return (int)((address & l2_addr_mask) >> 11);
 	}
 
 
@@ -204,8 +200,8 @@ public final class L2Arbiter
 	}
 
 	public static void resolveMemAccess(RequestEntry mem_req) {
-		Core mem_req_core = allCores[mem_req.requesterCoreNum];
-		L2Piece mem_l2_piece = mem_req_core.l2piece;
+		Core mem_has_core = allCores[getL2CoreID(mem_req.address)];
+		L2Piece mem_l2_piece = mem_has_core.l2piece;
 		CacheBlock cacheBlock = mem_l2_piece.getCacheBlock(mem_req);
 		if (cacheBlock == null) {
 			mem_l2_piece.add(mem_req.address, mem_req.rw);
@@ -214,7 +210,7 @@ public final class L2Arbiter
 
 			directory[mem_req.requesterCoreNum].put(newCacheBlock, newEntry);
 		} else {
-			data_lookup.add(mem_req);
+			data_lookup[mem_has_core.core_num].add(mem_req);
 		}
 	}
 

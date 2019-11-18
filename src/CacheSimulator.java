@@ -92,8 +92,8 @@ public class CacheSimulator
 		Core[] core_arr = new Core[number_of_cores];
 
 		for (int i = 0; i < number_of_cores; i++) {
-			L1Cache l1cache = new L1Cache(Math.pow(2, n1), Math.pow(2, b), Math.pow(2, a), i);
-			L2Piece l2piece = new L2Piece(Math.pow(2, n2), Math.pow(2, b), Math.pow(2, a), i);
+			L1Cache l1cache = new L1Cache((int)Math.pow(2, n1), (int)Math.pow(2, b), (int)Math.pow(2, a), i);
+			L2Piece l2piece = new L2Piece((int)Math.pow(2, n2), (int)Math.pow(2, b), (int)Math.pow(2, a), i);
 			core_arr[i] = new Core(i);
 			core_arr[i].l1cache = l1cache;
 			core_arr[i].l2piece = l2piece;

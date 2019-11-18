@@ -42,14 +42,14 @@ public class Cache
 	public void updateLRU(int index, int way)
 	{
 		int k;
-		for (k=0; k < this.cache.assoc; k++)
+		for (k=0; k < this.assoc; k++)
 		{
-			if(this.cache.blocks[index][k].lru < this.cache.blocks[index][way].lru)
+			if(this.blocks[index][k].lru < this.blocks[index][way].lru)
 			{
-				this.cache.blocks[index][k].lru = this.cache.blocks[index][k].lru + 1;
+				this.blocks[index][k].lru = this.blocks[index][k].lru + 1;
 			}
 		}
-		this.cache.blocks[index][way].lru = 0;
+		this.blocks[index][way].lru = 0;
 	}
 
 	/**
@@ -62,21 +62,21 @@ public class Cache
 	 */ 
 	public int cache_access(long address, int access_type)
 	{
-		int block_address = (int) (address / (long) this.cache.blocksize);
-		int tag = block_address / this.cache.nsets;
-		int index = block_address - (tag * this.cache.nsets);
+		int block_address = (int) (address / (long) this.blocksize);
+		int tag = block_address / this.nsets;
+		int index = block_address - (tag * this.nsets);
 		int i, way, max;
 
 		/**
 		 * Check for cache hit
 		 */
-		for (i=0; i < this.cache.assoc; i++) {
-			if (this.cache.blocks[index][i].tag == tag 
-					&& this.cache.blocks[index][i].valid) {
+		for (i=0; i < this.assoc; i++) {
+			if (this.blocks[index][i].tag == tag 
+					&& this.blocks[index][i].valid) {
 				// HIT!
 				this.updateLRU(index, i);
 				if (access_type == 1)
-					this.cache.blocks[index][i].dirty = true;
+					this.blocks[index][i].dirty = true;
 				return 0;
 			}
 		}
@@ -85,15 +85,15 @@ public class Cache
 		 * If not a hit, then it is a miss :(
 		 * Now, we are going to look for an invalid entry
 		 */
-		for (way=0; way<this.cache.assoc; way++) {
-			if (!this.cache.blocks[index][way].valid) {
+		for (way=0; way<this.assoc; way++) {
+			if (!this.blocks[index][way].valid) {
 				// Found an invalid entry
-				this.cache.blocks[index][way].valid = true;
-				this.cache.blocks[index][way].tag = tag;
-				this.cache.blocks[index][way].lru = way;
+				this.blocks[index][way].valid = true;
+				this.blocks[index][way].tag = tag;
+				this.blocks[index][way].lru = way;
 				this.updateLRU(index, way);
-				this.cache.blocks[index][way].dirty = (access_type != 0);
-				this.cache.blocks[index][i].address = address;
+				this.blocks[index][way].dirty = (access_type != 0);
+				this.blocks[index][way].address = address;
 				return 1;
 
 			}
@@ -103,11 +103,11 @@ public class Cache
 		 * No invalid block found :(
 		 * Now, we are going to find the least recently used block
 		 */
-		max = this.cache.blocks[index][0].lru;
+		max = this.blocks[index][0].lru;
 		way = 0;
-		for(i=0; i<this.cache.assoc; i++) {
-			if(this.cache.blocks[index][i].lru > max) {
-				max = this.cache.blocks[index][i].lru;
+		for(i=0; i<this.assoc; i++) {
+			if(this.blocks[index][i].lru > max) {
+				max = this.blocks[index][i].lru;
 				way = i;
 			}
 		}
@@ -116,15 +116,15 @@ public class Cache
 		 * We found the least recently used block
 		 * which is this.blocks[index][way]
 		 */
-		this.cache.blocks[index][way].tag = tag;
+		this.blocks[index][way].tag = tag;
 		this.updateLRU(index, way);
 
 		// Check the condition of the evicted block
-		this.cache.blocks[index][way].dirty = (access_type != 0);
-		handleEvictedBlock(this.cache.blocks[index][way]);
+		this.blocks[index][way].dirty = (access_type != 0);
+		handleEvictedBlock(this.blocks[index][way]);
 
-		this.cache.blocks[index][i].address = address;
-		if (!this.cache.blocks[index][way].dirty)
+		this.blocks[index][way].address = address;
+		if (!this.blocks[index][way].dirty)
 			return 1;
 		else
 			return 2;
@@ -143,20 +143,19 @@ public class Cache
 	 */
 	public CacheBlock getCacheBlock(long address)
 	{
-		int block_address = (int) (address / (long) this.cache.blocksize);
+		int block_address = (int) (address / (long) this.blocksize);
 
-		int tag = block_address / this.cache.nsets;
-		int index = block_address - (tag * this.cache.nsets);
+		int tag = block_address / this.nsets;
+		int index = block_address - (tag * this.nsets);
 
 		// Checking for cache hit
-		for(int i=0; i < this.cache.assoc; i++)
-		{
+		for(int i=0; i < this.assoc; i++) {
 			/* NOTE: 
 			 * L1 could be invalid but L2 can never be invalid
 			 */
-			if(this.cache.blocks[index][i].tag == tag && this.cache.blocks[index][i].valid) {
+			if(this.blocks[index][i].tag == tag && this.blocks[index][i].valid) {
 				// Hit and valid
-				return this.cache.blocks[index][i];
+				return this.blocks[index][i];
 			}
 		}
 

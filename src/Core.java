@@ -5,8 +5,8 @@ public class Core {
 	int cycle = 0;
 	Queue<RequestEntry> dq = new LinkedList<RequestEntry>();
 	Queue<MsgSentOutMap<Integer, Integer>> fulfillQueue = new LinkedList<MsgSentOutMap<Integer, Integer>>();
-	L1Cache l1cache = new L1Cache();
-	L2Piece l2piece = new L2Piece();
+	public L1Cache l1cache;
+	public L2Piece l2piece;
 	boolean finished_all_requests = false;
 	public int cycle_done = 0;
 	public int total_requests_missed = 0;
@@ -42,8 +42,7 @@ public class Core {
 
 	public void fulfill_request()
 	{
-		MsgSentOutMap<Integer, Integer> map = fulfillQueue.remove();
-
+		MsgSentOutMap<Integer, Integer> map = fulfillQueue.poll();
 		if (map == null) 
 			return;
 
