@@ -149,27 +149,90 @@ public class CacheSimulator
 			L2Arbiter.do_cycle(cycle);
 			accesses_left = update_accesses_left(core_arr);
 			if (!accesses_left) {
-				System.out.println("\n\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n");
+				System.out.println("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 				System.out.println("Simulation Done at cycle "+cycle);
-				System.out.println("\n\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+				System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
 				break;
 			}
 			cycle++;
 		}
 		if (Debug.debug_mode) {
-			System.out.println("\n\n");
 			System.out.println("******************************");
 			System.out.println("******************************");
 			print_cache_states(core_arr);
+			System.out.println("******************************");
+			System.out.println("******************************");
+			print_cache_states_l2(core_arr);
 		}
-		System.out.println("\n\n");
 		print_global_stats(core_arr);
 	}
 
 	public static void print_cache_states(Core[] core_arr)
 	{
-		//TODO implement this method
-		//are we print l2 also? in which case we need arbiter reference?
+		int width  = core_arr[0].l1cache.blocks[0].length;
+		int height = core_arr[0].l1cache.blocks.length ;
+
+		System.out.println("Printing cache address, tag, valid, dirty");
+		for (Core core : core_arr) {
+			System.out.println("Core " + core.core_num + "'s L1 cache:");
+			for (int row = 0; row < height; row++) {
+				int addr = row * width;
+				System.out.print(String.format("%08X ", addr));
+				for (int col = 0; col < width; col++) {
+					System.out.print("| ");
+					CacheBlock cb = core.l1cache.blocks[row][col];
+					System.out.print(String.format("%08X ", cb.tag));
+					System.out.print(cb.valid ? "v " : "i ");
+					System.out.print(cb.dirty ? "d " : "c ");
+					switch (cb.state) {
+					case INVALIDATED:
+						System.out.print("I ");
+						break;
+					case EXCLUSIVE:
+						System.out.print("E ");
+						break;
+					case SHARED:
+						System.out.print("S ");
+					}
+				}
+				System.out.println();
+			}
+			System.out.println();
+		}
+	}
+
+	public static void print_cache_states_l2(Core[] core_arr)
+	{
+		int width  = core_arr[0].l2piece.blocks[0].length;
+		int height = core_arr[0].l2piece.blocks.length ;
+
+		System.out.println("Printing cache address, tag, valid, dirty");
+		for (Core core : core_arr) {
+			System.out.println("Core " + core.core_num + "'s L2 cache:");
+			for (int row = 0; row < height; row++) {
+				int addr = row * width;
+				System.out.print(String.format("%08X ", addr));
+				for (int col = 0; col < width; col++) {
+					System.out.print("| ");
+					CacheBlock cb = core.l2piece.blocks[row][col];
+					System.out.print(String.format("%08X ", cb.tag));
+					System.out.print(cb.valid ? "v " : "i ");
+					System.out.print(cb.dirty ? "d " : "c ");
+					switch (cb.state) {
+					case INVALIDATED:
+						System.out.print("I ");
+						break;
+					case EXCLUSIVE:
+						System.out.print("E ");
+						break;
+					case SHARED:
+						System.out.print("S ");
+					}
+				}
+				System.out.println();
+			}
+			System.out.println();
+		}
 	}
 
 	public static void print_global_stats(Core[] core_arr)
