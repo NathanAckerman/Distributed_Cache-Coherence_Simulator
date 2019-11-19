@@ -14,5 +14,11 @@ public class L2Piece extends Cache
     public void add(long address, int rw)
     {
         cache_access(address, rw);
+	CacheBlock cache_block = getCacheBlock(address);
+	if (rw == 1) {
+		cache_block.state = CacheState.EXCLUSIVE;
+	} else {
+		cache_block.state = CacheState.SHARED;
+	}
     }
 }

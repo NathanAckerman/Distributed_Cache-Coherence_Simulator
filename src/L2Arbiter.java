@@ -169,6 +169,8 @@ public final class L2Arbiter
 
 	public static void queueRequest(RequestEntry req)
 	{
+		Debug.println("data msg received in L2 Arbiter");
+		L2Arbiter.num_data_msgs++;
 		int core = getL2CoreID(req.address);
 		data_lookup[core].add(req);
 	}

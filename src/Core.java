@@ -48,6 +48,14 @@ public class Core {
 
 		L2Arbiter.num_control_msgs++;
 		RequestEntry req = map.request;
+		CacheBlock cache_block = l1cache.getCacheBlock(req.address);
+		if (cache_block.state == CacheState.EXCLUSIVE) {
+			Debug.println("data msg for fulfill request");
+			L2Arbiter.num_data_msgs++;
+		} else {
+			Debug.println("control msg for fulfill request");
+			L2Arbiter.num_control_msgs++;
+		}
 
 		// If it is a read
 		l1cache.updateEntry(req);
@@ -77,6 +85,11 @@ public class Core {
 		} else if (head.delta == 0) {
 			boolean hit = l1cache.access(head);
 			if (hit) {
+				if(dq.size() == 1) {
+					Debug.println("Core "+core_num+" is completing last request at cycle "+cycle);
+					cycle_done = cycle;
+					finished_all_requests = true;
+				}
 				Debug.println("Request Completed");
 				Debug.println("Cache hit for core "+core_num+" at cycle "+cycle+" for request:");
 				print_request(head);
@@ -98,6 +111,7 @@ public class Core {
 	}
 
 	public void process_resolved_request() {
+		Debug.println("data msg receieved at core");
 		L2Arbiter.num_data_msgs++;
 		RequestEntry head = dq.remove();
 		if(dq.size() == 0) {

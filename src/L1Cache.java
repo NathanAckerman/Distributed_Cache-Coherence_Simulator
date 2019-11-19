@@ -34,7 +34,6 @@ public class L1Cache extends Cache
 				return true;
 
 		// otherwise send to arbiter
-		L2Arbiter.num_data_msgs++;
 		L2Arbiter.queueRequest(req);
 		return false;
 	}
