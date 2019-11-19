@@ -170,32 +170,48 @@ public class CacheSimulator
 	public static void print_cache_states(Core[] core_arr)
 	{
 		int width  = core_arr[0].l1cache.blocks[0].length;
-		int height = core_arr[0].l1cache.blocks.length ;
+		int height = core_arr[0].l1cache.blocks.length;
+		boolean last_row_empty = false;
+		boolean this_row_empty = true;
 
 		System.out.println("Printing cache address, tag, valid, dirty");
 		for (Core core : core_arr) {
 			System.out.println("Core " + core.core_num + "'s L1 cache:");
+
 			for (int row = 0; row < height; row++) {
+				last_row_empty = this_row_empty;
+				this_row_empty = true;
+
 				int addr = row * width;
-				System.out.print(String.format("%08X ", addr));
+				String addr_str = String.format("%08X ", addr);
+				String print_str = addr_str;
 				for (int col = 0; col < width; col++) {
-					System.out.print("| ");
+					print_str += "| ";
 					CacheBlock cb = core.l1cache.blocks[row][col];
-					System.out.print(String.format("%08X ", cb.tag));
-					System.out.print(cb.valid ? "v " : "i ");
-					System.out.print(cb.dirty ? "d " : "c ");
+					print_str += String.format("%08X ", cb.tag);
+					print_str += cb.valid ? "v " : "i ";
+					print_str += cb.dirty ? "d " : "c ";
 					switch (cb.state) {
 					case INVALIDATED:
-						System.out.print("I ");
+						print_str += "I ";
 						break;
 					case EXCLUSIVE:
-						System.out.print("E ");
+						print_str += "E ";
 						break;
 					case SHARED:
-						System.out.print("S ");
+						print_str += "S ";
 					}
+
+					if (cb.valid && this_row_empty)
+						this_row_empty = false;
 				}
-				System.out.println();
+
+				if (this_row_empty && !last_row_empty)
+					System.out.println(addr_str + "| *");
+				else if (!this_row_empty)
+					System.out.println(print_str);
+				else if (row + 1 == height)
+					System.out.println(addr_str + "| *");
 			}
 			System.out.println();
 		}
@@ -204,32 +220,48 @@ public class CacheSimulator
 	public static void print_cache_states_l2(Core[] core_arr)
 	{
 		int width  = core_arr[0].l2piece.blocks[0].length;
-		int height = core_arr[0].l2piece.blocks.length ;
+		int height = core_arr[0].l2piece.blocks.length;
+		boolean last_row_empty = false;
+		boolean this_row_empty = true;
 
 		System.out.println("Printing cache address, tag, valid, dirty");
 		for (Core core : core_arr) {
-			System.out.println("Core " + core.core_num + "'s L2 cache:");
+			System.out.println("Core " + core.core_num + "'s L1 cache:");
+
 			for (int row = 0; row < height; row++) {
+				last_row_empty = this_row_empty;
+				this_row_empty = true;
+
 				int addr = row * width;
-				System.out.print(String.format("%08X ", addr));
+				String addr_str = String.format("%08X ", addr);
+				String print_str = addr_str;
 				for (int col = 0; col < width; col++) {
-					System.out.print("| ");
+					print_str += "| ";
 					CacheBlock cb = core.l2piece.blocks[row][col];
-					System.out.print(String.format("%08X ", cb.tag));
-					System.out.print(cb.valid ? "v " : "i ");
-					System.out.print(cb.dirty ? "d " : "c ");
+					print_str += String.format("%08X ", cb.tag);
+					print_str += cb.valid ? "v " : "i ";
+					print_str += cb.dirty ? "d " : "c ";
 					switch (cb.state) {
 					case INVALIDATED:
-						System.out.print("I ");
+						print_str += "I ";
 						break;
 					case EXCLUSIVE:
-						System.out.print("E ");
+						print_str += "E ";
 						break;
 					case SHARED:
-						System.out.print("S ");
+						print_str += "S ";
 					}
+
+					if (cb.valid && this_row_empty)
+						this_row_empty = false;
 				}
-				System.out.println();
+
+				if (this_row_empty && !last_row_empty)
+					System.out.println(addr_str + "| *");
+				else if (!this_row_empty)
+					System.out.println(print_str);
+				else if (row + 1 == height)
+					System.out.println(addr_str + "| *");
 			}
 			System.out.println();
 		}
