@@ -1,6 +1,9 @@
 # Simple Cache Simulator
 
-Author: Maher Khan
+Authors:
+Nathan Ackerman
+Paul Elder
+Bin Dong
 
 ## Testing
 
